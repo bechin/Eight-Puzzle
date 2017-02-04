@@ -2,6 +2,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.HashSet;
 import java.util.PriorityQueue;
 
 public class EightPuzzle{
@@ -54,7 +55,12 @@ public class EightPuzzle{
 					String customPuzzle = kb.nextLine();
 					if(solvable(customPuzzle)){
 						solve(customPuzzle);
-					}
+/*						List<String> kids = expandToAllKids(customPuzzle);
+						for(String kid : kids){
+							print(kid);
+							System.out.println();
+						}
+*/					}
 					else{
 						System.out.println("Not a solvable puzzle!");
 					}
@@ -79,26 +85,89 @@ public class EightPuzzle{
 
 	private void solve(String... states){
 		for(String state : states){
-			Tree tree = new Tree(state, null);
+			Tree tree = new Tree(state, null, heuristicIsMisplacedTiles);
 			PriorityQueue<Tree> frontier = new PriorityQueue<>();
-			HashSet<Tree> visited = new HashSet<>();
+			HashSet<String> visited = new HashSet<>();
 			frontier.add(tree);
-			visited.add(tree);
-			visited.addAll(expand(frontier.poll()), visited);
-			
+			visited.add(tree.getData());
+			Tree current = tree;
+			while(!visited.contains("012345678")){
+				current = frontier.poll();
+				List<String> children = expandToAllKids(current.getData());
+				List<Tree> realKids = new ArrayList<>();
+				for(String child : children){
+					if(!visited.contains(child)){
+						visited.add(child);
+						frontier.add(new Tree(child, current, heuristicIsMisplacedTiles));
+					}
+				}
+				current.setChildren(realKids);
+			}
+			current = frontier.poll();
+			print(current.getData());
+			System.out.println("Total moves: " + current.getPathCost());
+			System.out.println("Success?");
 		}
 	}
 
-	private ArrayList<Tree> expand(Tree state, HashSet<Tree> visited){
-		List<Tree> children = new ArrayList<>();
-		
+	private List<String> expandToAllKids(String parent){
+		List<String> allChildren = new ArrayList<>();
+		int index = parent.indexOf("0");
+		char[] right, left, top, bottom;
+		switch(index%3){ //checking columns
+			case 0:	//left
+				right = parent.toCharArray();
+				swap(right, index, index+1);
+				allChildren.add(String.valueOf(right));
+				break;
+			case 1: //center
+				right = parent.toCharArray();
+				left = parent.toCharArray();
+				swap(right, index, index+1);
+				swap(left, index, index-1);
+				allChildren.add(String.valueOf(right));
+				allChildren.add(String.valueOf(left));
+				break;
+			case 2: //right
+				left = parent.toCharArray();
+				swap(left, index, index-1);
+				allChildren.add(String.valueOf(left));
+				break;
+		}
+		switch(index/3){ //checking rows
+			case 0: //top
+				bottom = parent.toCharArray();
+				swap(bottom, index, index+3);
+				allChildren.add(String.valueOf(bottom));
+				break;
+			case 1:	//center
+				bottom = parent.toCharArray();
+				top = parent.toCharArray();
+				swap(bottom, index, index+3);
+				swap(top, index, index-3);
+				allChildren.add(String.valueOf(bottom));
+				allChildren.add(String.valueOf(top));
+				break;
+			case 2: //bottom
+				top = parent.toCharArray();
+				swap(top, index, index-3);
+				allChildren.add(String.valueOf(top));
+				break;
+		}
+		return allChildren;
+	}
+	
+	private void swap(char[] array, int first, int second){
+		char temp = array[first];
+		array[first] = array[second];
+		array[second] = temp;
 	}
 
 	private boolean isSolution(String state){
 		return misplacedTiles(state) == 0;
 	}
 
-	private int misplacedTiles(String state){
+	public static int misplacedTiles(String state){
 		int result = 0;
 		for(int i = 0; i < 9; i++){
 			if(Character.getNumericValue(state.charAt(i)) != i){
@@ -123,7 +192,7 @@ public class EightPuzzle{
 		return (numOfInversions & 1) == 0; //isEven
 	}
 
-	private int manhattanDistance(String state){
+	public static int manhattanDistance(String state){
 		int result = 0;
 		for(int i = 0; i < 9; i++){
 			if(Character.getNumericValue(state.charAt(i)) != i){
@@ -186,6 +255,10 @@ class Tree implements Comparable<Tree>{
 		return pathCost;
 	}
 
+	public String getState(){
+		return state;
+	}
+
 	public boolean getHeuristicIsMisplacedTiles(){
 		if(heuristicIsMisplacedTiles == null){
 			heuristicIsMisplacedTiles = parent.getHeuristicIsMisplacedTiles();
@@ -197,8 +270,12 @@ class Tree implements Comparable<Tree>{
 		return state;
 	}
 
-	public void setChildren(ArrayList<Tree> children){
+	public void setChildren(List<Tree> children){
 		this.children = children;
+	}
+
+	public void setParent(Tree parent){
+		this.parent = parent;
 	}
 
 	private int evaluate(){

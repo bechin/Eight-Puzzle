@@ -28,4 +28,9 @@ Options for the second:
 
 The "Random puzzles" option requires another 
 
+things i need:
+-# of nodes generated
+-average run time
+-number of states with their solution depths
+
 
