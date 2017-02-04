@@ -1,0 +1,31 @@
+Compiling:
+javac EightPuzzle.java
+
+Running:
+java EightPuzzle
+
+Input can be scripted by input redirection, e.g. :
+java EightPuzzle < script
+
+Where a script that uses the Manhattan distance heuristic to solve:
+3 1 2
+0 4 5
+6 7 8
+would contain the following:
+2
+2
+312045678
+3
+
+Options for the first menu:
+1) Misplaced Tiles
+2) Manhattan Distance
+
+Options for the second:
+1) Random puzzles
+2) Custom puzzle
+3) Exit
+
+The "Random puzzles" option requires another 
+
+
