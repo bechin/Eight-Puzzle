@@ -42,25 +42,39 @@ public class EightPuzzle{
 			input = Integer.parseInt(kb.nextLine());
 			switch(input){
 				case 1:
+/*					System.out.println("Depth?");
+					int depth = Integer.parseInt(kb.nextLine());
+					if(depth != 0){
+						System.out.println("How many random puzzles?");
+						int numOfRands = Integer.parseInt(kb.nextLine());
+						String[] randomPuzzles = new String[numOfRands];
+						for(int i = 0; i < numOfRands; i ++){
+							String r = randomPuzzle(depth);
+							randomPuzzles[i] = r;
+							print(r);
+							System.out.println("-------------");
+						}
+						solve(randomPuzzles);
+						break;
+					}*/
 					System.out.println("How many random puzzles?");
 					int numOfRands = Integer.parseInt(kb.nextLine());
+					String[] randomPuzzles = new String[numOfRands];
 					for(int i = 0; i < numOfRands; i ++){
-						print(randomPuzzle());
-						System.out.println();
+						String r = randomPuzzle();
+						randomPuzzles[i] = r;
+						print(r);
+						System.out.println("-------------");
 					}
+					solve(randomPuzzles);
 					break;
 				case 2:
-					System.out.println("on a single line, " +
+					System.out.println("On a single line, " +
 									   "please enter a solvable puzzle.");
 					String customPuzzle = kb.nextLine();
 					if(solvable(customPuzzle)){
 						solve(customPuzzle);
-/*						List<String> kids = expandToAllKids(customPuzzle);
-						for(String kid : kids){
-							print(kid);
-							System.out.println();
-						}
-*/					}
+					}
 					else{
 						System.out.println("Not a solvable puzzle!");
 					}
@@ -106,7 +120,9 @@ public class EightPuzzle{
 			current = frontier.poll();
 			print(current.getData());
 			System.out.println("Total moves: " + current.getPathCost());
-			System.out.println("Success?");
+			if(states.length == 1){
+				printPath(current);
+			}
 		}
 	}
 
@@ -204,6 +220,14 @@ public class EightPuzzle{
 		return result;
 	}
 
+	private void printPath(Tree state){
+		if(state.getParent() != null){
+			printPath(state.getParent());
+		}
+		print(state.getData());
+		System.out.println();
+	}
+
 	private void print(String state){
 		for(int i = 0; i < 3; i++){
 			for(int j = 0; j < 3; j++){
@@ -227,6 +251,25 @@ public class EightPuzzle{
 			result = puzzle.toString();
 		}while(!solvable(result));
 		return result;
+	}
+
+	private String randomPuzzle(int depth){
+		String solution = "012345678";
+		HashSet<String> visited = new HashSet<>();
+		Tree tree = new Tree(solution, null, heuristicIsMisplacedTiles);
+		Tree result = tree;
+		while(result.getPathCost() != depth){
+			List<String> allChildren = expandToAllKids(result.getData());
+			List<String> realKids = new ArrayList<>();
+			for(String child: allChildren){
+				if(!visited.contains(child)){	
+					realKids.add(child);
+				}
+				visited.add(child);
+			}
+			result = new Tree(realKids.get((int)(Math.random()*realKids.size())), result, heuristicIsMisplacedTiles);
+		}
+		return result.getData();
 	}
 
 }
@@ -274,10 +317,19 @@ class Tree implements Comparable<Tree>{
 		this.children = children;
 	}
 
+	public List<Tree> getChildren(){
+		return children;
+	}
+
 	public void setParent(Tree parent){
 		this.parent = parent;
 	}
 
+	public Tree getParent(){
+		return parent;
+	}
+
+	//this calculates the evaluation function f(n) = g(n) + h(n)
 	private int evaluate(){
 		int result = getPathCost();
 		result += (getHeuristicIsMisplacedTiles())? EightPuzzle.misplacedTiles(state) :
@@ -285,7 +337,7 @@ class Tree implements Comparable<Tree>{
 		return result;
 	}
 
-	@Override //this calculates the evaluation function f(n) = g(n) + h(n)
+	@Override
 	public int compareTo(Tree that){
 		return this.evaluate() - that.evaluate();
 	}
